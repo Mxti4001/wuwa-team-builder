@@ -2,6 +2,8 @@ export interface BannerPhase {
   patch: string;
   phase: 'P1' | 'P2';
   key: string; // e.g. "3.8_P2"
+  /** ISO YYYY-MM-DD start date (optional, used for upcoming/active detection) */
+  startDate?: string;
   /** ISO YYYY-MM-DD end date of this banner phase (used for live day counter) */
   endDate: string;
 }
@@ -60,20 +62,64 @@ export const BANNER_PHASES: BannerPhase[] = [
   { patch: '3.5', phase: 'P2', key: '3.5_P2', endDate: daysAgoIso(124) },
   { patch: '3.6', phase: 'P1', key: '3.6_P1', endDate: daysAgoIso(124) },
   { patch: '3.6', phase: 'P2', key: '3.6_P2', endDate: daysAgoIso(61) },
-  { patch: '3.7', phase: 'P1', key: '3.7_P1', endDate: daysAgoIso(40) },
-  { patch: '3.7', phase: 'P2', key: '3.7_P2', endDate: daysAgoIso(40) },
-  { patch: '3.8', phase: 'P1', key: '3.8_P1', endDate: daysAgoIso(19) },
-  { patch: '3.8', phase: 'P2', key: '3.8_P2', endDate: '2026-12-10' },
+  { patch: '3.7', phase: 'P1', key: '3.7_P1', endDate: '2026-10-21' },
+  { patch: '3.7', phase: 'P2', key: '3.7_P2', endDate: '2026-11-11' },
+  { patch: '3.8', phase: 'P1', key: '3.8_P1', startDate: '2026-11-12', endDate: '2026-12-03' },
+  { patch: '3.8', phase: 'P2', key: '3.8_P2', startDate: '2026-12-03', endDate: '2026-12-23' },
 ];
 
-export function getDaysSinceBanner(lastPhaseKey: string): number {
-  const phase = BANNER_PHASES.find((p) => p.key === lastPhaseKey);
-  if (!phase) return 0;
+function parseIsoUtc(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+
+export interface BannerStatus {
+  daysSinceLast: number;
+  status: 'active' | 'upcoming' | 'ended';
+  upcomingStart?: string;
+}
+
+export function getBannerStatus(bannerKeys: string[]): BannerStatus {
   const now = new Date();
   const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  const [y, m, d] = phase.endDate.split('-').map(Number);
-  const endUtc = Date.UTC(y, m - 1, d);
-  return Math.max(0, Math.floor((todayUtc - endUtc) / MS_PER_DAY));
+
+  const phases = bannerKeys
+    .map((k) => BANNER_PHASES.find((p) => p.key === k))
+    .filter((p): p is BannerPhase => Boolean(p));
+
+  // Check if any banner is currently active
+  for (const p of phases) {
+    const startUtc = p.startDate ? parseIsoUtc(p.startDate) : 0;
+    const endUtc = parseIsoUtc(p.endDate);
+    if (todayUtc >= startUtc && todayUtc <= endUtc) {
+      return { daysSinceLast: 0, status: 'active' };
+    }
+  }
+
+  // Find most recent completed banner (endDate < todayUtc)
+  const completed = phases
+    .filter((p) => parseIsoUtc(p.endDate) < todayUtc)
+    .sort((a, b) => parseIsoUtc(b.endDate) - parseIsoUtc(a.endDate));
+
+  // Find next upcoming banner (startDate > todayUtc)
+  const upcoming = phases
+    .filter((p) => p.startDate && parseIsoUtc(p.startDate) > todayUtc)
+    .sort((a, b) => parseIsoUtc(a.startDate!) - parseIsoUtc(b.startDate!));
+
+  const daysSinceLast =
+    completed.length > 0
+      ? Math.max(0, Math.floor((todayUtc - parseIsoUtc(completed[0].endDate)) / MS_PER_DAY))
+      : 0;
+
+  if (upcoming.length > 0) {
+    return {
+      daysSinceLast,
+      status: 'upcoming',
+      upcomingStart: upcoming[0].startDate,
+    };
+  }
+
+  return { daysSinceLast, status: 'ended' };
 }
 
 export interface RerunEntry {
@@ -113,11 +159,11 @@ export const RERUN_HISTORY: RerunEntry[] = [
   { characterId: 'ciaccona', banners: ['2.3_P2', '2.6_P2', '3.0_P1'] },
   { characterId: 'zani', banners: ['2.3_P1', '2.7_P2', '3.2_P2'] },
   { characterId: 'cantarella', banners: ['2.2_P1', '2.5_P2', '2.8_P2'] },
-  { characterId: 'brant', banners: ['2.1_P2', '2.3_P2', '2.5_P2', '3.8_P2'] },
-  { characterId: 'phoebe', banners: ['2.1_P1', '2.3_P1', '2.8_P1', '3.2_P2', '3.8_P2'] },
-  { characterId: 'roccia', banners: ['2.0_P2', '2.3_P2', '2.5_P1', '3.8_P2'] },
+  { characterId: 'brant', banners: ['2.1_P2', '2.3_P2', '2.5_P2', '3.8_P1', '3.8_P2'] },
+  { characterId: 'phoebe', banners: ['2.1_P1', '2.3_P1', '2.8_P1', '3.2_P2', '3.8_P1', '3.8_P2'] },
+  { characterId: 'roccia', banners: ['2.0_P2', '2.3_P2', '2.5_P1', '3.8_P1', '3.8_P2'] },
   { characterId: 'carlotta', banners: ['2.0_P1', '2.3_P2', '2.6_P1'] },
-  { characterId: 'camellya', banners: ['1.4_P1', '2.2_P1', '3.8_P2'] },
+  { characterId: 'camellya', banners: ['1.4_P1', '2.2_P1', '3.8_P1', '3.8_P2'] },
   { characterId: 'shorekeeper', banners: ['1.3_P1', '2.2_P2', '2.6_P1'] },
   { characterId: 'xiangli_yao', banners: ['1.2_P2', '1.4_P2', '2.3_P1', '3.6_P1'] },
   { characterId: 'zhezhi', banners: ['1.2_P1', '2.0_P1', '2.3_P1', '3.6_P1'] },

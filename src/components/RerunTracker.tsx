@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { BANNER_PHASES, getDaysSinceBanner, RERUN_HISTORY } from '../data/rerunHistory';
+import { BANNER_PHASES, getBannerStatus, RERUN_HISTORY } from '../data/rerunHistory';
 import type { Character } from '../types';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -44,8 +44,7 @@ export function RerunTracker({ allCharacters }: { allCharacters: Character[] }) 
         }
       }
 
-      const lastBannerKey = entry.banners[entry.banners.length - 1];
-      const daysSinceLast = getDaysSinceBanner(lastBannerKey);
+      const bannerStatus = getBannerStatus(entry.banners);
 
       return {
         characterId: entry.characterId,
@@ -53,7 +52,8 @@ export function RerunTracker({ allCharacters }: { allCharacters: Character[] }) 
         char,
         cells,
         phasesSinceLast: waitCount,
-        daysSinceLast,
+        daysSinceLast: bannerStatus.daysSinceLast,
+        bannerStatus,
       };
     });
 
@@ -171,10 +171,21 @@ export function RerunTracker({ allCharacters }: { allCharacters: Character[] }) 
                 <td
                   className="rerun-days-td"
                   style={{
-                    color: row.daysSinceLast >= 300 ? '#fca5a5' : row.daysSinceLast === 0 ? '#6ee7b7' : '#f1f5f9',
+                    color:
+                      row.bannerStatus.status === 'active'
+                        ? '#6ee7b7'
+                        : row.bannerStatus.status === 'upcoming'
+                          ? '#7dd3fc'
+                          : row.daysSinceLast >= 300
+                            ? '#fca5a5'
+                            : '#f1f5f9',
                   }}
                 >
-                  {row.daysSinceLast === 0 ? 'Active (0d)' : `${row.daysSinceLast} days`}
+                  {row.bannerStatus.status === 'active'
+                    ? 'Active (0d)'
+                    : row.bannerStatus.status === 'upcoming'
+                      ? `${row.daysSinceLast}d (Rerun ${row.bannerStatus.upcomingStart?.slice(5)})`
+                      : `${row.daysSinceLast} days`}
                 </td>
               </tr>
             ))}
