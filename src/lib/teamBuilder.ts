@@ -728,7 +728,7 @@ export function evaluateTeam(
   }
 
   // 7. Game Mode & Stage Condition Adjustments
-  const gameMode = options?.gameMode ?? 'general';
+  const gameMode = options?.gameMode ?? 'toa';
   if (gameMode === 'whimpering_wastes') {
     const aoeCount = members.filter(
       (m) => hasTag(m, 'AoE') || hasTag(m, 'Whimpering Wastes') || hasTag(m, 'Crowd Control')
@@ -821,7 +821,7 @@ export function generateTopTeams(
         }
 
         const team = evaluateTeam(a, b, c, {
-          gameMode: options?.gameMode ?? 'general',
+          gameMode: options?.gameMode ?? 'toa',
           bossResistances: options?.bossResistances ?? [],
           stageBuff: options?.stageBuff ?? 'none',
         });
