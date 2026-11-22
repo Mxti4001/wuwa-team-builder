@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Pin, Play, RotateCcw, Search, ShieldAlert, Sparkles, Swords, Users } from 'lucide-react';
+import { Check, Pin, Play, RotateCcw, Search, Sparkles, Swords, Users } from 'lucide-react';
 import { loadCharacters } from './lib/csvParser';
 import {
   generateEndgameMatrixTeams,
@@ -20,7 +20,6 @@ import type {
 const STORAGE_KEY = 'wuwa_owned_characters_v1';
 
 const ELEMENTS: Array<ElementType | 'All'> = ['All', 'Fusion', 'Glacio', 'Electro', 'Aero', 'Spectro', 'Havoc'];
-const BOSS_ELEMENTS: ElementType[] = ['Fusion', 'Glacio', 'Electro', 'Aero', 'Spectro', 'Havoc'];
 const ROLES: Array<RoleType | 'All'> = ['All', 'Main DPS', 'Sub-DPS / Hybrid', 'Support / Healer'];
 const ARCHETYPES: Array<TeamArchetype | 'All'> = [
   'All',
@@ -107,7 +106,6 @@ export function App() {
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [archetypeFilter, setArchetypeFilter] = useState<TeamArchetype | 'All'>('All');
   const [gameMode, setGameMode] = useState<GameMode>('toa');
-  const [bossResistances, setBossResistances] = useState<ElementType[]>([]);
   const [stageBuff, setStageBuff] = useState<StageBuff>('none');
   const [emergencyResonatorId, setEmergencyResonatorId] = useState<string>('lucilla');
   const [needsRegenerate, setNeedsRegenerate] = useState(false);
@@ -120,7 +118,6 @@ export function App() {
   const runGeneration = (
     chars: Character[],
     mode: GameMode,
-    res: ElementType[],
     buff: StageBuff,
     pinned: string | null,
     arch: TeamArchetype | 'All',
@@ -128,7 +125,7 @@ export function App() {
   ): TeamRecommendation[] => {
     const common = {
       gameMode: mode,
-      bossResistances: res,
+      bossResistances: [],
       stageBuff: buff,
       pinnedCharacterId: pinned,
       archetypeFilter: arch,
@@ -163,7 +160,6 @@ export function App() {
     runGeneration(
       allCharacters.filter((c) => ownedIds.has(c.id)),
       'toa',
-      [],
       'none',
       null,
       'All',
@@ -183,7 +179,6 @@ export function App() {
     const teams = runGeneration(
       ownedCharacters,
       gameMode,
-      bossResistances,
       stageBuff,
       pinnedId,
       archetypeFilter,
@@ -213,13 +208,6 @@ export function App() {
       setOwnedIds((prev) => new Set(prev).add(char.id));
     }
     setPinnedId((prev) => (prev === char.id ? null : char.id));
-    setNeedsRegenerate(true);
-  };
-
-  const toggleResistance = (el: ElementType) => {
-    setBossResistances((prev) =>
-      prev.includes(el) ? prev.filter((item) => item !== el) : [...prev, el]
-    );
     setNeedsRegenerate(true);
   };
 
@@ -445,23 +433,6 @@ export function App() {
                     }}
                   >
                     {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="condition-label" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <ShieldAlert size={13} /> Boss Element Resistance (Penalized)
-              </div>
-              <div className="filter-chips">
-                {BOSS_ELEMENTS.map((el) => (
-                  <button
-                    key={el}
-                    className={`chip ${bossResistances.includes(el) ? 'active' : ''}`}
-                    onClick={() => toggleResistance(el)}
-                  >
-                    {el} RES
                   </button>
                 ))}
               </div>
