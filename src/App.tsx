@@ -12,7 +12,6 @@ import type {
   ElementType,
   GameMode,
   RoleType,
-  StageBuff,
   TeamArchetype,
   TeamRecommendation,
 } from './types';
@@ -35,17 +34,15 @@ const GAME_MODES: Array<{ id: GameMode; label: string }> = [
   { id: 'endgame_matrix', label: 'Endgame Matrix (Support 2× Vigor)' },
 ];
 
-const STAGE_BUFFS: Array<{ id: StageBuff; label: string }> = [
-  { id: 'none', label: 'None / Standard' },
-  { id: 'negative_status', label: 'Buff: Negative Status DMG (Chafe / Erosion / Frazzle / Bane)' },
-  { id: 'coordinated_attack', label: 'Buff: Coordinated Attack DMG' },
-  { id: 'echo_unison', label: 'Buff: Echo Skill / Unison DMG' },
-  { id: 'basic_attack', label: 'Buff: Basic Attack DMG' },
-  { id: 'heavy_attack', label: 'Buff: Heavy Attack DMG' },
-  { id: 'resonance_skill', label: 'Buff: Resonance Skill DMG' },
-  { id: 'resonance_liberation', label: 'Buff: Resonance Liberation DMG' },
-  { id: 'energy_drain', label: 'Debuff: Energy / Concerto Drain' },
-];
+function getBaseCharacterKey(id: string): { key: string; label: string } {
+  if (id.startsWith('rover_')) return { key: 'rover', label: 'Rover (All Elements)' };
+  if (id.startsWith('aemeath_')) return { key: 'aemeath', label: 'Aemeath (All Modes)' };
+  if (id.startsWith('denia_')) return { key: 'denia', label: 'Denia (All Modes)' };
+  if (id.startsWith('lucilla_')) return { key: 'lucilla', label: 'Lucilla (All Modes)' };
+  if (id.startsWith('hsin_')) return { key: 'hsin', label: 'Hsin (All Modes)' };
+  if (id.startsWith('lynae_')) return { key: 'lynae', label: 'Lynae (All Modes)' };
+  return { key: id, label: '' };
+}
 
 const F2P_STARTER_IDS = [
   'rover_havoc',
@@ -106,9 +103,21 @@ export function App() {
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [archetypeFilter, setArchetypeFilter] = useState<TeamArchetype | 'All'>('All');
   const [gameMode, setGameMode] = useState<GameMode>('toa');
-  const [stageBuff, setStageBuff] = useState<StageBuff>('none');
   const [emergencyResonatorId, setEmergencyResonatorId] = useState<string>('lucilla');
   const [needsRegenerate, setNeedsRegenerate] = useState(false);
+
+  const vigorCharacterOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of allCharacters) {
+      const { key, label } = getBaseCharacterKey(c.id);
+      if (!map.has(key)) {
+        map.set(key, label || c.name);
+      }
+    }
+    return [...map.entries()]
+      .map(([key, label]) => ({ key, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [allCharacters]);
 
   const ownedCharacters = useMemo(
     () => allCharacters.filter((c) => ownedIds.has(c.id)),
@@ -118,7 +127,6 @@ export function App() {
   const runGeneration = (
     chars: Character[],
     mode: GameMode,
-    buff: StageBuff,
     pinned: string | null,
     arch: TeamArchetype | 'All',
     emergencyId: string
@@ -126,7 +134,7 @@ export function App() {
     const common = {
       gameMode: mode,
       bossResistances: [],
-      stageBuff: buff,
+      stageBuff: 'none' as const,
       pinnedCharacterId: pinned,
       archetypeFilter: arch,
       emergencyResonatorId: emergencyId,
@@ -160,7 +168,6 @@ export function App() {
     runGeneration(
       allCharacters.filter((c) => ownedIds.has(c.id)),
       'toa',
-      'none',
       null,
       'All',
       'lucilla'
@@ -179,7 +186,6 @@ export function App() {
     const teams = runGeneration(
       ownedCharacters,
       gameMode,
-      stageBuff,
       pinnedId,
       archetypeFilter,
       emergencyResonatorId
@@ -439,51 +445,26 @@ export function App() {
             </div>
 
             <div>
-              <div className="condition-label">Stage Buff / Debuff (ToA / WiWa / Matrix)</div>
+              <div className="condition-label">Matrix Character Vigor Buff (+1 Extra Vigor)</div>
               <select
                 className="select-input"
-                value={stageBuff}
+                value={emergencyResonatorId}
                 onChange={(e) => {
-                  setStageBuff(e.target.value as StageBuff);
+                  setEmergencyResonatorId(e.target.value);
                   setNeedsRegenerate(true);
                 }}
               >
-                {STAGE_BUFFS.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.label}
+                <option value="">None</option>
+                {vigorCharacterOptions.map((opt) => (
+                  <option key={opt.key} value={opt.key}>
+                    {opt.label}
                   </option>
                 ))}
               </select>
-            </div>
-
-            {gameMode === 'endgame_matrix' && (
-              <div>
-                <div className="condition-label">Rotating Emergency Resonator (+1 Extra Vigor → 2 Vigor)</div>
-                <select
-                  className="select-input"
-                  value={emergencyResonatorId}
-                  onChange={(e) => {
-                    setEmergencyResonatorId(e.target.value);
-                    setNeedsRegenerate(true);
-                  }}
-                >
-                  <option value="">None</option>
-                  <option value="lucilla">Lucilla (Current Patch)</option>
-                  <option value="aemeath">Aemeath</option>
-                  <option value="denia">Denia</option>
-                  <option value="hiyuki">Hiyuki</option>
-                  <option value="hsin">Hsin</option>
-                  <option value="sigrika">Sigrika</option>
-                  <option value="carlotta">Carlotta</option>
-                  <option value="jinhsi">Jinhsi</option>
-                  <option value="cartethyia">Cartethyia</option>
-                  <option value="phrolova">Phrolova</option>
-                </select>
-                <div style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 4 }}>
-                  2 Vigor: All Support/Healers (incl. Mornye; excl. Rover &amp; Youhu) + Emergency Resonator.
-                </div>
+              <div style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 4 }}>
+                Endgame Matrix: Support/Healers (incl. Mornye; excl. Rover &amp; Youhu) have 2 Vigor, plus +1 Vigor for the selected Resonator.
               </div>
-            )}
+            </div>
 
             <div>
               <div className="condition-label">Archetype Filter</div>

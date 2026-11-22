@@ -60,7 +60,9 @@ const META_CORES: Array<{ ids: string[]; label: string; bonus: number }> = [
   { ids: ['denia_strain', 'luuk_herssen', 'verina'], label: 'Luuk + Denia + Verina', bonus: 24 },
   { ids: ['luuk_herssen', 'lynae_strain', 'verina'], label: 'Luuk + Lynae + Verina', bonus: 22 },
   { ids: ['luuk_herssen', 'sanhua', 'verina'], label: 'Luuk + Sanhua + Verina', bonus: 20 },
-  { ids: ['aemeath_burst', 'chisa', 'denia_burst'], label: 'T0.5 Aemeath Fusion Burst (Chisa #2)', bonus: 21 },
+  { ids: ['aemeath_burst', 'chisa', 'denia_burst'], label: 'T0.5 Aemeath Fusion Burst + Chisa (BiS)', bonus: 28 },
+  { ids: ['aemeath_burst', 'denia_burst', 'suisui'], label: 'T0.5 Aemeath Fusion Burst + Suisui', bonus: 18 },
+  { ids: ['aemeath_burst', 'denia_burst', 'lupa'], label: 'T0.5 Aemeath Fusion Burst + Lupa', bonus: 16 },
   { ids: ['aemeath_burst', 'brant', 'lupa'], label: 'T1 Aemeath Mono-Fusion', bonus: 14 },
   { ids: ['cartethyia', 'chisa', 'ciaccona'], label: 'T0.5 Cartethyia Aero Erosion (Chisa #3)', bonus: 16 },
   { ids: ['cartethyia', 'ciaccona', 'rover_aero'], label: 'Aero Erosion F2P-Friendly Core', bonus: 14 },
@@ -389,11 +391,14 @@ function scoreMechanicNeeds(carry: Character, teammates: Character[]): { points:
   return { points, reasons };
 }
 
-function orderRotation(members: Character[], archetype: TeamArchetype): [Character, Character, Character] {
+/**
+ * Orders display slots as [Slot 1: Main DPS, Slot 2: Sub-DPS, Slot 3: Support]
+ */
+function orderSlots(members: Character[], archetype: TeamArchetype): [Character, Character, Character] {
   const sorted = [...members].sort((a, b) => {
     const scorePos = (c: Character) => {
-      if (c.role === 'Support / Healer' || (c.outroTarget === 'All Team' && isHealer(c))) return 0;
-      if (c.role === 'Sub-DPS / Hybrid' && c.outroTarget === 'Next Resonator') return 1;
+      if (c.role === 'Main DPS') return 0;
+      if (c.role === 'Sub-DPS / Hybrid' && !(c.outroTarget === 'All Team' && isHealer(c))) return 1;
       if (c.role === 'Sub-DPS / Hybrid') return 1;
       return 2;
     };
@@ -570,40 +575,40 @@ export function evaluateTeam(
     });
   }
 
-  // 3. Rotation & Outro Buffs
-  const ordered = orderRotation(members, archetype);
-  const [slot1, slot2, slot3] = ordered;
+  // 3. Order Slots [Main DPS, Sub-DPS, Support] & Score Outro Buffs
+  const ordered = orderSlots(members, archetype);
+  const [dpsSlot, subSlot, supportSlot] = ordered;
 
-  if (slot1.outroTarget === 'All Team') {
-    const outro1 = scoreOutroBuff(slot1, slot3);
-    score += outro1.points;
-    if (outro1.matched.length > 0) {
+  if (supportSlot.outroTarget === 'All Team') {
+    const outroSup = scoreOutroBuff(supportSlot, dpsSlot);
+    score += outroSup.points;
+    if (outroSup.matched.length > 0) {
       reasons.push({
         type: 'outro',
-        label: `${slot1.name} (All Team): ${outro1.matched.join(', ')}`,
+        label: `${supportSlot.name} (All Team): ${outroSup.matched.join(', ')}`,
       });
     }
   } else {
-    const outro1to2 = scoreOutroBuff(slot1, slot2);
-    score += Math.round(outro1to2.points * 0.6);
-    if (outro1to2.matched.length > 0) {
+    const outroSupToSub = scoreOutroBuff(supportSlot, subSlot);
+    score += Math.round(outroSupToSub.points * 0.6);
+    if (outroSupToSub.matched.length > 0) {
       reasons.push({
         type: 'outro',
-        label: `${slot1.name} → ${slot2.name}: ${outro1to2.matched.join(', ')}`,
+        label: `${supportSlot.name} → ${subSlot.name}: ${outroSupToSub.matched.join(', ')}`,
       });
     }
   }
 
-  const outro2to3 = scoreOutroBuff(slot2, slot3);
-  score += outro2to3.points;
+  const outroSubToDps = scoreOutroBuff(subSlot, dpsSlot);
+  score += outroSubToDps.points;
   const isCollabDuo =
-    (slot2.id === 'rebecca' && slot3.id === 'lucy') ||
-    (slot2.id === 'lucy' && slot3.id === 'rebecca');
+    (subSlot.id === 'rebecca' && dpsSlot.id === 'lucy') ||
+    (subSlot.id === 'lucy' && dpsSlot.id === 'rebecca');
 
-  if (outro2to3.matched.length > 0) {
+  if (outroSubToDps.matched.length > 0) {
     reasons.push({
       type: 'outro',
-      label: `${slot2.name} → ${slot3.name}: ${outro2to3.matched.join(', ')}`,
+      label: `${subSlot.name} → ${dpsSlot.name}: ${outroSubToDps.matched.join(', ')}`,
     });
   } else if (isCollabDuo) {
     score += 14;
@@ -611,23 +616,23 @@ export function evaluateTeam(
       type: 'quickswap',
       label: 'Lucy + Rebecca Collab synergy (dual-element Quick-Swap)',
     });
-  } else if (slot2.role === 'Sub-DPS / Hybrid' && archetype !== 'Dual-DPS Quick-Swap') {
+  } else if (subSlot.role === 'Sub-DPS / Hybrid' && archetype !== 'Dual-DPS Quick-Swap') {
     score -= 14;
     reasons.push({
       type: 'warning',
-      label: `${slot2.name} Outro does not match ${slot3.name}`,
+      label: `${subSlot.name} Outro does not match ${dpsSlot.name}`,
     });
   }
 
   if (archetype === 'Dual-DPS Quick-Swap') {
-    const outro3to2 = scoreOutroBuff(slot3, slot2);
-    if (outro3to2.points > 0) {
-      score += Math.round(outro3to2.points * 0.5);
+    const outroDpsToSub = scoreOutroBuff(dpsSlot, subSlot);
+    if (outroDpsToSub.points > 0) {
+      score += Math.round(outroDpsToSub.points * 0.5);
     }
   }
 
   // 4. Mechanic / Status Synergy
-  const carries = mainDpsList.length > 0 ? mainDpsList : [slot3];
+  const carries = mainDpsList.length > 0 ? mainDpsList : [dpsSlot];
   for (const carry of carries) {
     const teammates = members.filter((m) => m.id !== carry.id);
     const mech = scoreMechanicNeeds(carry, teammates);
@@ -661,7 +666,7 @@ export function evaluateTeam(
   const avgTier = members.reduce((sum, m) => sum + TIER_SCORE[m.metaTier], 0) / 3;
   score += Math.round(avgTier * 1.3);
 
-  const primaryCarry = mainDpsList[0] ?? slot3;
+  const primaryCarry = mainDpsList[0] ?? dpsSlot;
   if (primaryCarry.metaTier === 'T2') {
     score -= 12;
     reasons.push({ type: 'warning', label: `${primaryCarry.name} has lower endgame DPS ceiling (T2)` });
@@ -739,6 +744,12 @@ export function evaluateTeam(
     } else {
       score -= 8;
     }
+    if (members.some((m) => m.id === 'aemeath_burst')) {
+      score += 20;
+    }
+    if (members.some((m) => m.id === 'aemeath_rupture')) {
+      score -= 10;
+    }
   } else if (gameMode === 'toa') {
     const stBurst = carries.some((c) => hasTag(c, 'Burst') || hasTag(c, 'Nuke') || c.metaTier === 'T0');
     if (stBurst) {
@@ -771,10 +782,10 @@ export function evaluateTeam(
 
   const rotationHint =
     archetype === 'Dual-DPS Quick-Swap'
-      ? `${slot1.name} (Buff/Heal) → ${slot2.name} ⇄ ${slot3.name} (Quick-Swap)`
+      ? `${supportSlot.name} (Buff/Heal) → ${dpsSlot.name} ⇄ ${subSlot.name} (Quick-Swap)`
       : archetype === 'Double Intro'
-        ? `${slot1.name} (Outro) → ${slot2.name} (Intro #1) → ${slot3.name} (Outro) → ${slot2.name} (Intro #2) → ${slot3.name}`
-        : `${slot1.name} (Buff/Heal) → ${slot2.name} (Outro) → ${slot3.name} (DPS)`;
+        ? `${supportSlot.name} (Outro) → ${subSlot.name} (Intro #1) → ${dpsSlot.name} (Outro) → ${subSlot.name} (Intro #2) → ${dpsSlot.name}`
+        : `${supportSlot.name} (Buff/Heal) → ${subSlot.name} (Outro) → ${dpsSlot.name} (DPS)`;
 
   return {
     id: sortedIds,
@@ -864,7 +875,7 @@ export function generateEndgameMatrixTeams(
     if ((char.role === 'Support / Healer' || key === 'mornye') && key !== 'rover' && key !== 'youhu') {
       vigor = 2;
     }
-    if (emergencyId && key === emergencyId && vigor < 2) {
+    if (emergencyId && key === emergencyId) {
       vigor += 1;
     }
     return vigor;
