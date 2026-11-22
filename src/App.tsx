@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Pin, Play, RotateCcw, Search, Sparkles, Swords, Users } from 'lucide-react';
+import { CalendarClock, Check, Pin, Play, RotateCcw, Search, Sparkles, Swords, Users } from 'lucide-react';
+import { CharacterAvatar } from './components/CharacterAvatar';
+import { RerunTracker } from './components/RerunTracker';
 import { loadCharacters } from './lib/csvParser';
 import {
   generateEndgameMatrixTeams,
@@ -96,6 +98,7 @@ export function App() {
     return new Set(META_SAMPLE_IDS);
   });
 
+  const [page, setPage] = useState<'builder' | 'reruns'>('builder');
   const [search, setSearch] = useState('');
   const [elementFilter, setElementFilter] = useState<ElementType | 'All'>('All');
   const [roleFilter, setRoleFilter] = useState<RoleType | 'All'>('All');
@@ -249,6 +252,20 @@ export function App() {
           </p>
         </div>
         <div className="header-stats">
+          <div className="btn-row">
+            <button
+              className={`btn ${page === 'builder' ? 'active' : ''}`}
+              onClick={() => setPage('builder')}
+            >
+              <Swords size={14} /> Team Builder
+            </button>
+            <button
+              className={`btn ${page === 'reruns' ? 'active' : ''}`}
+              onClick={() => setPage('reruns')}
+            >
+              <CalendarClock size={14} /> Rerun Tracker (1.0–3.8)
+            </button>
+          </div>
           <span className="pill">
             <Users size={15} />
             Owned: <strong>{ownedCharacters.length}</strong> / {allCharacters.length}
@@ -267,6 +284,9 @@ export function App() {
         </div>
       </header>
 
+      {page === 'reruns' ? (
+        <RerunTracker allCharacters={allCharacters} />
+      ) : (
       <div className="main-grid">
         {/* LEFT PANEL: MY ROSTER */}
         <section className="panel">
@@ -376,8 +396,11 @@ export function App() {
                   title={char.outroDescription}
                 >
                   <div className="char-top">
-                    <span className="char-name">{char.name}</span>
-                    <span className={char.rarity === 5 ? 'rarity-5' : 'rarity-4'} style={{ fontSize: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                      <CharacterAvatar character={char} size={42} />
+                      <span className="char-name">{char.name}</span>
+                    </div>
+                    <span className={char.rarity === 5 ? 'rarity-5' : 'rarity-4'} style={{ fontSize: '0.75rem', flexShrink: 0 }}>
                       {char.rarity}★
                     </span>
                   </div>
@@ -559,6 +582,7 @@ export function App() {
           )}
         </section>
       </div>
+      )}
     </div>
   );
 }
