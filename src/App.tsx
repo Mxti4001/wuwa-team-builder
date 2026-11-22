@@ -31,7 +31,6 @@ const ARCHETYPES: Array<TeamArchetype | 'All'> = [
 ];
 
 const GAME_MODES: Array<{ id: GameMode; label: string }> = [
-  { id: 'general', label: 'General / All' },
   { id: 'toa', label: 'Tower of Adversity (ToA)' },
   { id: 'whimpering_wastes', label: 'Whimpering Wastes (WiWa)' },
   { id: 'endgame_matrix', label: 'Endgame Matrix (Support 2× Vigor)' },
@@ -107,7 +106,7 @@ export function App() {
   const [rarityFilter, setRarityFilter] = useState<'All' | 5 | 4>('All');
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [archetypeFilter, setArchetypeFilter] = useState<TeamArchetype | 'All'>('All');
-  const [gameMode, setGameMode] = useState<GameMode>('general');
+  const [gameMode, setGameMode] = useState<GameMode>('toa');
   const [bossResistances, setBossResistances] = useState<ElementType[]>([]);
   const [stageBuff, setStageBuff] = useState<StageBuff>('none');
   const [emergencyResonatorId, setEmergencyResonatorId] = useState<string>('lucilla');
@@ -163,7 +162,7 @@ export function App() {
   const [recommendedTeams, setRecommendedTeams] = useState<TeamRecommendation[]>(() =>
     runGeneration(
       allCharacters.filter((c) => ownedIds.has(c.id)),
-      'general',
+      'toa',
       [],
       'none',
       null,

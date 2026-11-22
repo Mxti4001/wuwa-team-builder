@@ -31,7 +31,7 @@ export interface SynergyReason {
   label: string;
 }
 
-export type GameMode = 'general' | 'toa' | 'whimpering_wastes' | 'endgame_matrix';
+export type GameMode = 'toa' | 'whimpering_wastes' | 'endgame_matrix';
 
 export type StageBuff =
   | 'none'
