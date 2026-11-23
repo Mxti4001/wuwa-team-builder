@@ -1,5 +1,6 @@
 import csvRaw from '../../characters.csv?raw';
-import type { Character, ElementType, MetaTier, OutroTarget, RoleType } from '../types';
+import bossesCsvRaw from '../../matrix_bosses.csv?raw';
+import type { Character, ElementType, MatrixBossConfig, MetaTier, OutroTarget, RoleType } from '../types';
 
 function splitTags(value: string | undefined): string[] {
   if (!value) return [];
@@ -70,6 +71,39 @@ export function loadCharacters(): Character[] {
       metaTier: (get('meta_tier') || 'T2') as MetaTier,
       outroDescription: get('outro_description'),
       signatureWeaponBuff: get('signature_weapon_buff') || undefined,
+    };
+  });
+}
+
+export function loadMatrixBosses(): MatrixBossConfig[] {
+  const lines = bossesCsvRaw
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  if (lines.length < 2) return [];
+
+  const headers = parseCsvLine(lines[0]);
+  const colIndex = (name: string) => headers.indexOf(name);
+
+  return lines.slice(1).map((line) => {
+    const cols = parseCsvLine(line);
+    const get = (name: string) => cols[colIndex(name)] ?? '';
+
+    const weakMechanics = splitTags(get('weak_mechanics')).map((item) => {
+      const [tag, pts] = item.split(':');
+      return { tag: tag.trim(), score: Number(pts) || 35 };
+    });
+
+    return {
+      name: get('name'),
+      element: (get('element') || 'Neutral') as ElementType | 'Neutral',
+      weakMechanics,
+      resistedElement: (get('resisted_element') || 'None') as ElementType | 'None',
+      baseFit: Number(get('base_fit')) || 0,
+      reason: get('reason'),
     };
   });
 }

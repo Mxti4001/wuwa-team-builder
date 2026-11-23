@@ -55,6 +55,21 @@ export interface TeamGenerationOptions {
   limit?: number;
 }
 
+export interface BossRecommendation {
+  name: string;
+  element: ElementType | 'Neutral';
+  reason: string;
+}
+
+export interface MatrixBossConfig {
+  name: string;
+  element: ElementType | 'Neutral';
+  weakMechanics: Array<{ tag: string; score: number }>;
+  resistedElement: ElementType | 'None';
+  baseFit: number;
+  reason: string;
+}
+
 export interface TeamRecommendation {
   id: string;
   /** Ordered in recommended rotation: [Slot 1, Slot 2, Slot 3] */
@@ -65,6 +80,7 @@ export interface TeamRecommendation {
   rotationHint: string;
   reasons: SynergyReason[];
   isMetaCore?: boolean;
+  recommendedBoss?: BossRecommendation;
   /** Optional room label for ToA (6 rooms) or Whimpering Wastes (2 halves) */
   roomLabel?: string;
 }

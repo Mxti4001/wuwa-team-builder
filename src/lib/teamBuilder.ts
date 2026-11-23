@@ -1,4 +1,6 @@
+import { loadMatrixBosses } from './csvParser';
 import type {
+  BossRecommendation,
   Character,
   ElementType,
   MetaTier,
@@ -814,6 +816,55 @@ export function evaluateTeam(
     if (buffResult.reason) reasons.push(buffResult.reason);
   }
 
+const MATRIX_BOSSES = loadMatrixBosses();
+
+function teamMatchesMechanic(members: Character[], tag: string): boolean {
+  const lower = tag.toLowerCase();
+  if (lower === 'negative status') {
+    return members.some((m) =>
+      ['Glacio Chafe', 'Aero Erosion', 'Spectro Frazzle', 'Havoc Bane', 'Fusion Burst', 'Electro Flare'].some((s) =>
+        hasTag(m, s)
+      )
+    );
+  }
+  return members.some((m) => m.primaryDamageTypes.some((d) => d.toLowerCase().includes(lower)) || hasTag(m, tag));
+}
+
+function recommendBossForTeam(members: Character[], carries: Character[]): BossRecommendation {
+  const carryElements = new Set(carries.map((c) => c.element));
+
+  const candidates = MATRIX_BOSSES.map((boss) => {
+    let fit = boss.baseFit;
+    let bestMechanicScore = 0;
+
+    for (const mech of boss.weakMechanics) {
+      if (teamMatchesMechanic(members, mech.tag) && mech.score > bestMechanicScore) {
+        bestMechanicScore = mech.score;
+      }
+    }
+    fit += bestMechanicScore;
+
+    if (boss.resistedElement !== 'None' && carryElements.has(boss.resistedElement)) {
+      fit -= boss.resistedElement === 'Aero' ? 28 : 45;
+    }
+
+    return {
+      name: boss.name,
+      element: boss.element,
+      reason: boss.reason,
+      fit,
+    };
+  });
+
+  candidates.sort((a, b) => b.fit - a.fit);
+  const best = candidates[0] ?? {
+    name: 'Matrix Mimic',
+    element: 'Neutral' as const,
+    reason: 'Equal RES to all elements (1.1x points multiplier)',
+  };
+  return { name: best.name, element: best.element, reason: best.reason };
+}
+
   const rawScore = Math.round(score);
   const normalizedScore = Math.max(0, Math.min(100, rawScore));
 
@@ -833,6 +884,7 @@ export function evaluateTeam(
     rotationHint,
     reasons: reasons.slice(0, 5),
     isMetaCore,
+    recommendedBoss: recommendBossForTeam(members, carries),
   };
 }
 

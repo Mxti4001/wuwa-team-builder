@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarClock, Check, Pin, Play, RotateCcw, Search, Sparkles, Swords, Users } from 'lucide-react';
+import { CalendarClock, Check, ChevronDown, ChevronUp, Pin, Play, RotateCcw, Search, Shield, Sparkles, Swords, Users } from 'lucide-react';
 import { CharacterAvatar } from './components/CharacterAvatar';
 import { RerunTracker } from './components/RerunTracker';
-import { loadCharacters } from './lib/csvParser';
+import { loadCharacters, loadMatrixBosses } from './lib/csvParser';
 import { generateEndgameMatrixTeams } from './lib/teamBuilder';
 import type {
   Character,
@@ -28,6 +28,8 @@ function getBaseCharacterKey(id: string): { key: string; label: string } {
 
 export function App() {
   const allCharacters = useMemo(() => loadCharacters(), []);
+  const matrixBosses = useMemo(() => loadMatrixBosses(), []);
+  const [showBosses, setShowBosses] = useState(true);
 
   const [ownedIds, setOwnedIds] = useState<Set<string>>(() => {
     try {
@@ -244,7 +246,49 @@ export function App() {
       {page === 'reruns' ? (
         <RerunTracker allCharacters={allCharacters} />
       ) : (
-        <div className="main-grid">
+        <>
+          <section className="panel boss-overview-panel">
+            <div className="panel-header" style={{ marginBottom: showBosses ? 12 : 0 }}>
+              <h2 className="panel-title">
+                <Shield size={18} /> Patch Matrix Bosses ({matrixBosses.length})
+              </h2>
+              <button className="btn" onClick={() => setShowBosses((v) => !v)}>
+                {showBosses ? (
+                  <>
+                    <ChevronUp size={14} /> Hide
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={14} /> Show
+                  </>
+                )}
+              </button>
+            </div>
+            {showBosses && (
+              <div className="boss-grid">
+                {matrixBosses.map((boss) => (
+                  <div key={boss.name} className="boss-card">
+                    <div className="boss-card-top">
+                      <strong>{boss.name}</strong>
+                      <span className={`tag el-${boss.element}`}>{boss.element}</span>
+                    </div>
+                    <div className="boss-card-reason">{boss.reason}</div>
+                    {boss.weakMechanics.length > 0 && (
+                      <div className="boss-card-tags">
+                        {boss.weakMechanics.map((m) => (
+                          <span key={m.tag} className="tag">
+                            {m.tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <div className="main-grid">
           {/* LEFT PANEL: MY ROSTER */}
           <section className="panel">
             <div className="panel-header">
@@ -471,6 +515,16 @@ export function App() {
                       <strong>Rotation:</strong> {team.rotationHint}
                     </div>
 
+                    {team.recommendedBoss && (
+                      <div className="boss-bar">
+                        <strong>Best Boss:</strong>{' '}
+                        <span className={`el-${team.recommendedBoss.element}`}>
+                          {team.recommendedBoss.name} ({team.recommendedBoss.element})
+                        </span>{' '}
+                        — {team.recommendedBoss.reason}
+                      </div>
+                    )}
+
                     <ul className="reasons-list">
                       {team.reasons.map((r, rIdx) => (
                         <li key={rIdx} className="reason-item">
@@ -485,6 +539,7 @@ export function App() {
             )}
           </section>
         </div>
+        </>
       )}
     </div>
   );

@@ -1,0 +1,6 @@
+name,element,weak_mechanics,resisted_element,base_fit,reason
+Feilian Beringal,Aero,Tune Break:42;Tune Rupture:42;Tune Strain:42,Aero,0,Weak to Tune Break (+12.5% per break up to 4 stacks)
+Denia,Fusion,Glacio Chafe:55;Negative Status:35,Fusion,0,Weak to Glacio Chafe (+30%) & Negative Status (+25% DMG)
+Crownless,Havoc,Unison:48,Havoc,0,Weak to Unison Response (+40% DMG for 30s)
+Sigillum,Spectro,Echo Skill:46,Spectro,0,Weak to Echo Skill hits (up to +80% DMG at 5 stacks)
+Matrix Mimic,Neutral,,None,20,Equal RES to all elements (1.1x points multiplier)
