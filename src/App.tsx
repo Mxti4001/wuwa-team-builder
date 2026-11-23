@@ -350,7 +350,7 @@ export function App() {
                       <span className="tag">{char.metaTier}</span>
                     </div>
 
-                    <div style={{ fontSize: '0.71rem', color: '#94a3b8', lineHeight: 1.3 }}>
+                    <div className="char-dmg-line" style={{ fontSize: '0.71rem', color: '#94a3b8', lineHeight: 1.3 }}>
                       {char.primaryDamageTypes.slice(0, 2).join(' · ')}
                     </div>
 

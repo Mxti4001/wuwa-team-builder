@@ -652,4 +652,84 @@ thead .rerun-sticky-name {
   .mobile-swipe-hint {
     display: block;
   }
+
+  .app-shell {
+    padding: 12px 10px 28px;
+  }
+
+  .header {
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem;
+  }
+
+  .panel {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .roster-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    max-height: 58vh;
+  }
+
+  .char-card {
+    padding: 7px;
+    gap: 4px;
+    border-radius: 10px;
+  }
+
+  .char-top {
+    gap: 5px;
+  }
+
+  .char-avatar {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 8px;
+  }
+
+  .char-name {
+    font-size: 0.74rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .char-meta {
+    gap: 3px;
+    font-size: 0.62rem;
+  }
+
+  .tag {
+    padding: 1px 4px;
+  }
+
+  .char-dmg-line {
+    display: none;
+  }
+
+  .char-actions {
+    font-size: 0.64rem;
+    padding-top: 2px;
+  }
+
+  /* Rerun Tracker mobile: unstick right column so middle patch grid is visible */
+  .rerun-sticky-name {
+    min-width: 108px;
+    max-width: 118px;
+    padding: 3px 6px !important;
+    font-size: 0.66rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rerun-days-th,
+  .rerun-days-td {
+    position: static;
+  }
 }
