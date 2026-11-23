@@ -69,6 +69,7 @@ export function loadCharacters(): Character[] {
       synergyNeeds: splitTags(get('synergy_needs')),
       metaTier: (get('meta_tier') || 'T2') as MetaTier,
       outroDescription: get('outro_description'),
+      signatureWeaponBuff: get('signature_weapon_buff') || undefined,
     };
   });
 }

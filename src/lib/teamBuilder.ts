@@ -45,22 +45,25 @@ const META_CORES: Array<{ ids: string[]; label: string; bonus: number }> = [
   { ids: ['lynae_strain', 'mornye', 'suoming'], label: 'T0.5 Suoming Hypercarry + Lynae + Mornye', bonus: 18 },
   { ids: ['lynae_strain', 'shorekeeper', 'suoming'], label: 'T0.5 Suoming Hypercarry + Lynae + Shorekeeper', bonus: 17 },
   { ids: ['sanhua', 'shorekeeper', 'suoming'], label: 'T0.5 Suoming + Sanhua + Shorekeeper', bonus: 15 },
-  { ids: ['denia_strain', 'mornye', 'qingxiao'], label: 'T0 Qingxiao + Denia + Mornye (#1)', bonus: 44 },
-  { ids: ['lynae_strain', 'mornye', 'qingxiao'], label: 'T0 Qingxiao + Lynae + Mornye (#1)', bonus: 42 },
-  { ids: ['denia_strain', 'qingxiao', 'shorekeeper'], label: 'T0 Qingxiao + Denia + Shorekeeper', bonus: 22 },
-  { ids: ['denia_strain', 'qingxiao', 'verina'], label: 'T0 Qingxiao + Denia + Verina', bonus: 18 },
-  { ids: ['denia_strain', 'lynae_strain', 'qingxiao'], label: 'T0 Qingxiao Dual-Tune Core', bonus: 16 },
-  { ids: ['aemeath_rupture', 'lynae_rupture', 'mornye'], label: 'T0.5 Aemeath Tune Rupture (Mornye #2)', bonus: 40 },
-  { ids: ['denia_strain', 'luuk_herssen', 'mornye'], label: 'Luuk + Denia + Mornye (Mornye #3)', bonus: 38 },
-  { ids: ['luuk_herssen', 'lynae_strain', 'mornye'], label: 'Luuk + Lynae + Mornye', bonus: 36 },
-  { ids: ['luuk_herssen', 'mornye', 'sanhua'], label: 'Luuk + Sanhua + Mornye', bonus: 34 },
-  { ids: ['denia_strain', 'luuk_herssen', 'shorekeeper'], label: 'Luuk + Denia + Shorekeeper', bonus: 30 },
-  { ids: ['luuk_herssen', 'lynae_strain', 'shorekeeper'], label: 'Luuk + Lynae + Shorekeeper', bonus: 28 },
-  { ids: ['luuk_herssen', 'sanhua', 'shorekeeper'], label: 'Luuk + Sanhua + Shorekeeper', bonus: 26 },
-  { ids: ['denia_strain', 'luuk_herssen', 'verina'], label: 'Luuk + Denia + Verina', bonus: 24 },
-  { ids: ['luuk_herssen', 'lynae_strain', 'verina'], label: 'Luuk + Lynae + Verina', bonus: 22 },
-  { ids: ['luuk_herssen', 'sanhua', 'verina'], label: 'Luuk + Sanhua + Verina', bonus: 20 },
-  { ids: ['aemeath_burst', 'chisa', 'denia_burst'], label: 'T0.5 Aemeath Fusion Burst + Chisa (BiS)', bonus: 28 },
+  { ids: ['denia_strain', 'mornye', 'qingxiao'], label: 'T0 Qingxiao + Denia + Mornye (#1)', bonus: 72 },
+  { ids: ['aemeath_rupture', 'lynae_rupture', 'mornye'], label: 'T0.5 Aemeath + Lynae + Mornye (Lynae #1)', bonus: 44 },
+  { ids: ['lynae_strain', 'mornye', 'qingxiao'], label: 'T0 Qingxiao + Lynae + Mornye', bonus: 40 },
+  { ids: ['aemeath_rupture', 'lynae_rupture', 'shorekeeper'], label: 'T0.5 Aemeath + Lynae + Shorekeeper', bonus: 36 },
+  { ids: ['denia_strain', 'qingxiao', 'shorekeeper'], label: 'T0 Qingxiao + Denia + Shorekeeper', bonus: 44 },
+  { ids: ['lynae_strain', 'qingxiao', 'shorekeeper'], label: 'T0 Qingxiao + Lynae + Shorekeeper', bonus: 28 },
+  { ids: ['denia_strain', 'qingxiao', 'verina'], label: 'T0 Qingxiao + Denia + Verina', bonus: 38 },
+  { ids: ['buling', 'denia_strain', 'qingxiao'], label: 'T0 Qingxiao + Denia + Buling', bonus: 34 },
+  { ids: ['denia_strain', 'lynae_strain', 'qingxiao'], label: 'T0 Qingxiao Dual-Tune Core', bonus: 26 },
+  { ids: ['denia_strain', 'luuk_herssen', 'mornye'], label: 'Luuk + Denia + Mornye (Mornye #3)', bonus: 25 },
+  { ids: ['luuk_herssen', 'lynae_strain', 'mornye'], label: 'Luuk + Lynae + Mornye', bonus: 23 },
+  { ids: ['luuk_herssen', 'mornye', 'sanhua'], label: 'Luuk + Sanhua + Mornye', bonus: 21 },
+  { ids: ['denia_strain', 'luuk_herssen', 'shorekeeper'], label: 'Luuk + Denia + Shorekeeper', bonus: 19 },
+  { ids: ['luuk_herssen', 'lynae_strain', 'shorekeeper'], label: 'Luuk + Lynae + Shorekeeper', bonus: 17 },
+  { ids: ['luuk_herssen', 'sanhua', 'shorekeeper'], label: 'Luuk + Sanhua + Shorekeeper', bonus: 15 },
+  { ids: ['denia_strain', 'luuk_herssen', 'verina'], label: 'Luuk + Denia + Verina', bonus: 14 },
+  { ids: ['luuk_herssen', 'lynae_strain', 'verina'], label: 'Luuk + Lynae + Verina', bonus: 13 },
+  { ids: ['luuk_herssen', 'sanhua', 'verina'], label: 'Luuk + Sanhua + Verina', bonus: 12 },
+  { ids: ['aemeath_burst', 'chisa', 'denia_burst'], label: 'T0.5 Aemeath Fusion Burst + Chisa (BiS)', bonus: 22 },
   { ids: ['aemeath_burst', 'denia_burst', 'suisui'], label: 'T0.5 Aemeath Fusion Burst + Suisui', bonus: 18 },
   { ids: ['aemeath_burst', 'denia_burst', 'lupa'], label: 'T0.5 Aemeath Fusion Burst + Lupa', bonus: 16 },
   { ids: ['aemeath_burst', 'brant', 'lupa'], label: 'T1 Aemeath Mono-Fusion', bonus: 14 },
@@ -392,22 +395,30 @@ function scoreMechanicNeeds(carry: Character, teammates: Character[]): { points:
 }
 
 /**
- * Orders display slots as [Slot 1: Main DPS, Slot 2: Sub-DPS, Slot 3: Support]
+ * Orders display slots as [Slot 1: Main DPS, Slot 2: Sub-DPS, Slot 3: Support].
+ * When a team has no formal Main DPS (e.g. Iuno + Jianxin + Mortefi, or Suoming Hypercarry),
+ * the highest-tier Dual-DPS hybrid is placed in Slot 1 as the primary DPS.
  */
 function orderSlots(members: Character[], archetype: TeamArchetype): [Character, Character, Character] {
+  const hasFormalMainDps = members.some((m) => m.role === 'Main DPS');
+
   const sorted = [...members].sort((a, b) => {
     const scorePos = (c: Character) => {
       if (c.role === 'Main DPS') return 0;
-      if (c.role === 'Sub-DPS / Hybrid' && !(c.outroTarget === 'All Team' && isHealer(c))) return 1;
-      if (c.role === 'Sub-DPS / Hybrid') return 1;
-      return 2;
+      if (c.role === 'Support / Healer') return 2;
+      // Sub-DPS / Hybrid
+      if (!hasFormalMainDps && hasTag(c, 'Dual-DPS')) return 0;
+      return 1;
     };
     const diff = scorePos(a) - scorePos(b);
     if (diff !== 0) return diff;
+    if (!hasFormalMainDps && scorePos(a) === 0 && scorePos(b) === 0) {
+      return TIER_SCORE[b.metaTier] - TIER_SCORE[a.metaTier];
+    }
     if (archetype === 'Dual-DPS Quick-Swap') {
       return a.name.localeCompare(b.name);
     }
-    return 0;
+    return TIER_SCORE[a.metaTier] - TIER_SCORE[b.metaTier];
   });
 
   return [sorted[0], sorted[1], sorted[2]];
@@ -642,6 +653,45 @@ export function evaluateTeam(
     }
   }
 
+  // 4b. Personal (Signature) Weapon Team Buffs
+  for (const supporter of members) {
+    const sig = supporter.signatureWeaponBuff;
+    if (!sig) continue;
+    const s = sig.toLowerCase();
+    const otherCarries = carries.filter((c) => c.id !== supporter.id);
+
+    if (s.includes('team fusion dmg') && otherCarries.some((c) => c.element === 'Fusion')) {
+      score += 6;
+      reasons.push({ type: 'outro', label: `${supporter.name} Sig: ${sig}` });
+    } else if (s.includes('aero res') && otherCarries.some((c) => c.element === 'Aero')) {
+      score += 6;
+      reasons.push({ type: 'outro', label: `${supporter.name} Sig: ${sig}` });
+    } else if (s.includes('echo skill dmg') && otherCarries.some((c) => c.primaryDamageTypes.includes('Echo Skill'))) {
+      score += 6;
+      reasons.push({ type: 'outro', label: `${supporter.name} Sig: ${sig}` });
+    } else if (
+      s.includes('kumokiri') &&
+      otherCarries.some((c) =>
+        ['Glacio Chafe', 'Aero Erosion', 'Spectro Frazzle', 'Havoc Bane', 'Fusion Burst'].some((n) => hasTag(c, n))
+      )
+    ) {
+      score += 6;
+      reasons.push({ type: 'outro', label: `${supporter.name} Sig: ${sig}` });
+    } else if (s.includes('spectro frazzle') && otherCarries.some((c) => hasTag(c, 'Spectro Frazzle'))) {
+      score += 6;
+      reasons.push({ type: 'outro', label: `${supporter.name} Sig: ${sig}` });
+    } else if (s.includes('team atk +14%') && otherCarries.some((c) => !hasTag(c, 'HP-Scaling'))) {
+      score += 4;
+      reasons.push({ type: 'outro', label: `${supporter.name} Sig: ${sig}` });
+    } else if (
+      s.includes('tune') &&
+      otherCarries.some((c) => hasTag(c, 'Tune Strain') || hasTag(c, 'Tune Rupture') || hasTag(c, 'Tune Break'))
+    ) {
+      score += 5;
+      reasons.push({ type: 'outro', label: `${supporter.name} Sig: ${sig}` });
+    }
+  }
+
   // 5. Shorekeeper vs Verina rule + Buling S6 Caution + Character Power Level
   if (members.some((m) => m.id === 'shorekeeper') && archetype !== 'Double Intro') {
     score += 5;
@@ -732,28 +782,12 @@ export function evaluateTeam(
     });
   }
 
-  // 7. Game Mode & Stage Condition Adjustments
-  const gameMode = options?.gameMode ?? 'toa';
-  if (gameMode === 'whimpering_wastes') {
-    const aoeCount = members.filter(
-      (m) => hasTag(m, 'AoE') || hasTag(m, 'Whimpering Wastes') || hasTag(m, 'Crowd Control')
-    ).length;
-    if (aoeCount > 0) {
-      score += aoeCount * 6;
-      reasons.push({ type: 'mechanic', label: 'Strong AoE / wave-clear for Whimpering Wastes' });
-    } else {
-      score -= 8;
-    }
-    if (members.some((m) => m.id === 'aemeath_burst')) {
-      score += 20;
-    }
-    if (members.some((m) => m.id === 'aemeath_rupture')) {
-      score -= 10;
-    }
-  } else if (gameMode === 'toa') {
+  // 7. Endgame Matrix Mode
+  const gameMode = options?.gameMode ?? 'endgame_matrix';
+  if (gameMode === 'endgame_matrix') {
     const stBurst = carries.some((c) => hasTag(c, 'Burst') || hasTag(c, 'Nuke') || c.metaTier === 'T0');
     if (stBurst) {
-      score += 6;
+      score += 4;
     }
   }
 
@@ -832,7 +866,7 @@ export function generateTopTeams(
         }
 
         const team = evaluateTeam(a, b, c, {
-          gameMode: options?.gameMode ?? 'toa',
+          gameMode: options?.gameMode ?? 'endgame_matrix',
           bossResistances: options?.bossResistances ?? [],
           stageBuff: options?.stageBuff ?? 'none',
         });
@@ -947,7 +981,7 @@ export function generateToATeams(
 ): TeamRecommendation[] {
   const allCandidates = generateTopTeams(ownedCharacters, {
     ...options,
-    gameMode: 'toa',
+    gameMode: 'endgame_matrix',
     limit: Infinity,
   });
 

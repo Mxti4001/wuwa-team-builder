@@ -1,40 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarClock, Check, Pin, Play, RotateCcw, Search, Sparkles, Swords, Users } from 'lucide-react';
 import { CharacterAvatar } from './components/CharacterAvatar';
 import { RerunTracker } from './components/RerunTracker';
 import { loadCharacters } from './lib/csvParser';
-import {
-  generateEndgameMatrixTeams,
-  generateNonOverlappingTeams,
-  generateToATeams,
-  generateTopTeams,
-} from './lib/teamBuilder';
+import { generateEndgameMatrixTeams } from './lib/teamBuilder';
 import type {
   Character,
   ElementType,
-  GameMode,
   RoleType,
-  TeamArchetype,
   TeamRecommendation,
 } from './types';
 
-const STORAGE_KEY = 'wuwa_owned_characters_v1';
+const STORAGE_KEY = 'wuwa_owned_characters_v2';
 
 const ELEMENTS: Array<ElementType | 'All'> = ['All', 'Fusion', 'Glacio', 'Electro', 'Aero', 'Spectro', 'Havoc'];
 const ROLES: Array<RoleType | 'All'> = ['All', 'Main DPS', 'Sub-DPS / Hybrid', 'Support / Healer'];
-const ARCHETYPES: Array<TeamArchetype | 'All'> = [
-  'All',
-  'Hypercarry',
-  'Dual-DPS Quick-Swap',
-  'Double Intro',
-  'Mechanic / Status Core',
-];
-
-const GAME_MODES: Array<{ id: GameMode; label: string }> = [
-  { id: 'toa', label: 'Tower of Adversity (ToA)' },
-  { id: 'whimpering_wastes', label: 'Whimpering Wastes (WiWa)' },
-  { id: 'endgame_matrix', label: 'Endgame Matrix (Support 2× Vigor)' },
-];
 
 function getBaseCharacterKey(id: string): { key: string; label: string } {
   if (id.startsWith('rover_')) return { key: 'rover', label: 'Rover (All Elements)' };
@@ -45,42 +25,6 @@ function getBaseCharacterKey(id: string): { key: string; label: string } {
   if (id.startsWith('lynae_')) return { key: 'lynae', label: 'Lynae (All Modes)' };
   return { key: id, label: '' };
 }
-
-const F2P_STARTER_IDS = [
-  'rover_havoc',
-  'rover_spectro',
-  'rover_aero',
-  'verina',
-  'sanhua',
-  'mortefi',
-  'baizhi',
-  'yangyang',
-  'chixia',
-  'danjin',
-  'buling',
-];
-
-const META_SAMPLE_IDS = [
-  'jinhsi',
-  'carlotta',
-  'buling',
-  'shorekeeper',
-  'changli',
-  'brant',
-  'lupa',
-  'camellya',
-  'verina',
-  'sanhua',
-  'zhezhi',
-  'hiyuki',
-  'lucilla_chafe',
-  'suisui',
-  'lucy',
-  'rebecca',
-  'mornye',
-  'zani',
-  'phoebe',
-];
 
 export function App() {
   const allCharacters = useMemo(() => loadCharacters(), []);
@@ -95,7 +39,11 @@ export function App() {
     } catch {
       // ignore storage errors
     }
-    return new Set(META_SAMPLE_IDS);
+    return new Set(
+      allCharacters
+        .filter((c) => c.rarity === 4 || c.id.startsWith('rover_'))
+        .map((c) => c.id)
+    );
   });
 
   const [page, setPage] = useState<'builder' | 'reruns'>('builder');
@@ -104,10 +52,45 @@ export function App() {
   const [roleFilter, setRoleFilter] = useState<RoleType | 'All'>('All');
   const [rarityFilter, setRarityFilter] = useState<'All' | 5 | 4>('All');
   const [pinnedId, setPinnedId] = useState<string | null>(null);
-  const [archetypeFilter, setArchetypeFilter] = useState<TeamArchetype | 'All'>('All');
-  const [gameMode, setGameMode] = useState<GameMode>('toa');
   const [emergencyResonatorId, setEmergencyResonatorId] = useState<string>('lucilla');
   const [needsRegenerate, setNeedsRegenerate] = useState(false);
+
+  const touchStartRef = useRef<{ x: number; y: number; inTable: boolean; tableAtStart: boolean } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    const target = e.target as HTMLElement | null;
+    const tableWrap = target?.closest('.rerun-table-wrap') as HTMLElement | null;
+    touchStartRef.current = {
+      x: t.clientX,
+      y: t.clientY,
+      inTable: Boolean(tableWrap),
+      tableAtStart: tableWrap ? tableWrap.scrollLeft <= 2 : true,
+    };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start) return;
+
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+
+    // Swipe right-to-left: Team Builder -> Rerun Tracker
+    if (dx < -70 && page === 'builder') {
+      setPage('reruns');
+      return;
+    }
+
+    // Swipe left-to-right: Rerun Tracker -> Team Builder
+    if (dx > 70 && page === 'reruns' && (!start.inTable || start.tableAtStart)) {
+      setPage('builder');
+    }
+  };
 
   const vigorCharacterOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -129,50 +112,23 @@ export function App() {
 
   const runGeneration = (
     chars: Character[],
-    mode: GameMode,
     pinned: string | null,
-    arch: TeamArchetype | 'All',
     emergencyId: string
   ): TeamRecommendation[] => {
-    const common = {
-      gameMode: mode,
+    return generateEndgameMatrixTeams(chars, {
+      gameMode: 'endgame_matrix',
       bossResistances: [],
-      stageBuff: 'none' as const,
+      stageBuff: 'none',
       pinnedCharacterId: pinned,
-      archetypeFilter: arch,
+      archetypeFilter: 'All',
       emergencyResonatorId: emergencyId,
-    };
-
-    if (mode === 'endgame_matrix') {
-      return generateEndgameMatrixTeams(chars, common);
-    }
-    if (mode === 'whimpering_wastes') {
-      return generateNonOverlappingTeams(chars, {
-        ...common,
-        maxTeams: 4,
-        roomLabels: [
-          'WiWa Team 1 (Best Half)',
-          'WiWa Team 2 (Best Half)',
-          'WiWa Team 3 (Flex Option)',
-          'WiWa Team 4 (Flex Option)',
-        ],
-      });
-    }
-    if (mode === 'toa') {
-      return generateToATeams(chars, common);
-    }
-    return generateTopTeams(chars, {
-      ...common,
-      limit: 60,
     });
   };
 
   const [recommendedTeams, setRecommendedTeams] = useState<TeamRecommendation[]>(() =>
     runGeneration(
       allCharacters.filter((c) => ownedIds.has(c.id)),
-      'toa',
       null,
-      'All',
       'lucilla'
     )
   );
@@ -188,9 +144,7 @@ export function App() {
   const handleGenerate = () => {
     const teams = runGeneration(
       ownedCharacters,
-      gameMode,
       pinnedId,
-      archetypeFilter,
       emergencyResonatorId
     );
     setRecommendedTeams(teams);
@@ -240,15 +194,18 @@ export function App() {
   const pinnedChar = allCharacters.find((c) => c.id === pinnedId) ?? null;
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <header className="header">
         <div>
           <h1>Wuthering Waves — Smart Team Builder</h1>
           <p>
-            Select your Resonators, set ToA / Whimpering Wastes / Endgame Matrix conditions, then click Generate.
+            Select your Resonators, set your Endgame Matrix Vigor Buff, then click Generate.
           </p>
           <p style={{ color: '#fcd34d', fontSize: '0.8rem', marginTop: 6 }}>
-            ★ Assumption: All 4★ Resonators are evaluated at S6 (e.g., Buling S6 grants +50% Resonance Skill DMG Bonus instead of +25% at S0–S5).
+            ★ Assumptions: All 4★ Resonators are evaluated at S6 (e.g., Buling S6 grants +50% Resonance Skill DMG Bonus instead of +25% at S0–S5), and all 5★ Resonators are evaluated with their personal (signature) weapon buffs.
+          </p>
+          <p className="mobile-swipe-hint">
+            Swipe ← for Rerun Tracker · Swipe → to return
           </p>
         </div>
         <div className="header-stats">
@@ -287,301 +244,247 @@ export function App() {
       {page === 'reruns' ? (
         <RerunTracker allCharacters={allCharacters} />
       ) : (
-      <div className="main-grid">
-        {/* LEFT PANEL: MY ROSTER */}
-        <section className="panel">
-          <div className="panel-header">
-            <h2 className="panel-title">
-              <Sparkles size={18} /> 1. Select Your Resonators
-            </h2>
-            <div className="btn-row">
-              <button
-                className="btn"
-                onClick={() => {
-                  setOwnedIds(new Set(META_SAMPLE_IDS));
-                  setNeedsRegenerate(true);
-                }}
-              >
-                Meta Sample
-              </button>
-              <button
-                className="btn"
-                onClick={() => {
-                  setOwnedIds(new Set(F2P_STARTER_IDS));
-                  setNeedsRegenerate(true);
-                }}
-              >
-                F2P Starter
-              </button>
-              <button
-                className="btn"
-                onClick={() => {
-                  setOwnedIds(new Set(allCharacters.map((c) => c.id)));
-                  setNeedsRegenerate(true);
-                }}
-              >
-                Select All
-              </button>
-              <button
-                className="btn"
-                onClick={() => {
-                  setOwnedIds(new Set());
-                  setPinnedId(null);
-                  setNeedsRegenerate(true);
-                }}
-              >
-                <RotateCcw size={13} /> Clear
-              </button>
-            </div>
-          </div>
-
-          <div className="filters">
-            <div style={{ position: 'relative' }}>
-              <Search
-                size={15}
-                style={{ position: 'absolute', left: 11, top: 11, color: '#94a3b8' }}
-              />
-              <input
-                className="search-input"
-                style={{ paddingLeft: 34 }}
-                placeholder="Search character, damage type, or mechanic..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
-            <div className="filter-chips">
-              {ELEMENTS.map((el) => (
-                <button
-                  key={el}
-                  className={`chip ${elementFilter === el ? 'active' : ''}`}
-                  onClick={() => setElementFilter(el)}
-                >
-                  {el}
-                </button>
-              ))}
-            </div>
-
-            <div className="filter-chips">
-              {ROLES.map((role) => (
-                <button
-                  key={role}
-                  className={`chip ${roleFilter === role ? 'active' : ''}`}
-                  onClick={() => setRoleFilter(role)}
-                >
-                  {role}
-                </button>
-              ))}
-              {(['All', 5, 4] as const).map((r) => (
-                <button
-                  key={String(r)}
-                  className={`chip ${rarityFilter === r ? 'active' : ''}`}
-                  onClick={() => setRarityFilter(r)}
-                >
-                  {r === 'All' ? 'All ★' : `${r}★`}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="roster-grid">
-            {filteredCharacters.map((char) => {
-              const owned = ownedIds.has(char.id);
-              const pinned = pinnedId === char.id;
-              return (
-                <div
-                  key={char.id}
-                  className={`char-card ${owned ? 'owned' : ''} ${pinned ? 'pinned' : ''}`}
-                  onClick={() => toggleOwned(char.id)}
-                  title={char.outroDescription}
-                >
-                  <div className="char-top">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                      <CharacterAvatar character={char} size={42} />
-                      <span className="char-name">{char.name}</span>
-                    </div>
-                    <span className={char.rarity === 5 ? 'rarity-5' : 'rarity-4'} style={{ fontSize: '0.75rem', flexShrink: 0 }}>
-                      {char.rarity}★
-                    </span>
-                  </div>
-
-                  <div className="char-meta">
-                    <span className={`tag el-${char.element}`}>{char.element}</span>
-                    <span className="tag">{char.role.replace(' / Hybrid', '').replace(' / Healer', '')}</span>
-                    <span className="tag">{char.metaTier}</span>
-                  </div>
-
-                  <div style={{ fontSize: '0.71rem', color: '#94a3b8', lineHeight: 1.3 }}>
-                    {char.primaryDamageTypes.slice(0, 2).join(' · ')}
-                  </div>
-
-                  <div className="char-actions">
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                      {owned ? (
-                        <>
-                          <Check size={12} color="#38bdf8" /> Owned
-                        </>
-                      ) : (
-                        'Click to own'
-                      )}
-                    </span>
-                    <button
-                      className={`pin-btn ${pinned ? 'active' : ''}`}
-                      onClick={(e) => togglePin(e, char)}
-                      title="Build teams around this character"
-                    >
-                      {pinned ? 'Pinned' : 'Pin'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* RIGHT PANEL: CONDITIONS + RECOMMENDED TEAMS */}
-        <section className="panel">
-          <div className="panel-header">
-            <h2 className="panel-title">
-              <Swords size={18} /> 2. Mode &amp; Team Recommendations
-            </h2>
-            <span className="pill">{recommendedTeams.length} Teams</span>
-          </div>
-
-          <div className="condition-box">
-            <div>
-              <div className="condition-label">Endgame Mode</div>
+        <div className="main-grid">
+          {/* LEFT PANEL: MY ROSTER */}
+          <section className="panel">
+            <div className="panel-header">
+              <h2 className="panel-title">
+                <Sparkles size={18} /> 1. Select Your Resonators
+              </h2>
               <div className="btn-row">
-                {GAME_MODES.map((m) => (
-                  <button
-                    key={m.id}
-                    className={`btn ${gameMode === m.id ? 'active' : ''}`}
-                    onClick={() => {
-                      setGameMode(m.id);
-                      setNeedsRegenerate(true);
-                    }}
-                  >
-                    {m.label}
-                  </button>
-                ))}
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setOwnedIds(new Set(allCharacters.map((c) => c.id)));
+                    setNeedsRegenerate(true);
+                  }}
+                >
+                  Select All
+                </button>
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setOwnedIds(new Set());
+                    setPinnedId(null);
+                    setNeedsRegenerate(true);
+                  }}
+                >
+                  <RotateCcw size={13} /> Clear
+                </button>
               </div>
             </div>
 
-            <div>
-              <div className="condition-label">Matrix Character Vigor Buff (+1 Extra Vigor)</div>
-              <select
-                className="select-input"
-                value={emergencyResonatorId}
-                onChange={(e) => {
-                  setEmergencyResonatorId(e.target.value);
-                  setNeedsRegenerate(true);
-                }}
-              >
-                <option value="">None</option>
-                {vigorCharacterOptions.map((opt) => (
-                  <option key={opt.key} value={opt.key}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <div style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 4 }}>
-                Endgame Matrix: Support/Healers (incl. Mornye; excl. Rover &amp; Youhu) have 2 Vigor, plus +1 Vigor for the selected Resonator.
+            <div className="filters">
+              <div style={{ position: 'relative' }}>
+                <Search
+                  size={15}
+                  style={{ position: 'absolute', left: 11, top: 11, color: '#94a3b8' }}
+                />
+                <input
+                  className="search-input"
+                  style={{ paddingLeft: 34 }}
+                  placeholder="Search character, damage type, or mechanic..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
               </div>
-            </div>
 
-            <div>
-              <div className="condition-label">Archetype Filter</div>
               <div className="filter-chips">
-                {ARCHETYPES.map((arch) => (
+                {ELEMENTS.map((el) => (
                   <button
-                    key={arch}
-                    className={`chip ${archetypeFilter === arch ? 'active' : ''}`}
-                    onClick={() => {
-                      setArchetypeFilter(arch);
-                      setNeedsRegenerate(true);
-                    }}
+                    key={el}
+                    className={`chip ${elementFilter === el ? 'active' : ''}`}
+                    onClick={() => setElementFilter(el)}
                   >
-                    {arch}
+                    {el}
+                  </button>
+                ))}
+              </div>
+
+              <div className="filter-chips">
+                {ROLES.map((role) => (
+                  <button
+                    key={role}
+                    className={`chip ${roleFilter === role ? 'active' : ''}`}
+                    onClick={() => setRoleFilter(role)}
+                  >
+                    {role}
+                  </button>
+                ))}
+                {(['All', 5, 4] as const).map((r) => (
+                  <button
+                    key={String(r)}
+                    className={`chip ${rarityFilter === r ? 'active' : ''}`}
+                    onClick={() => setRarityFilter(r)}
+                  >
+                    {r === 'All' ? 'All ★' : `${r}★`}
                   </button>
                 ))}
               </div>
             </div>
 
-            <button className="generate-btn" onClick={handleGenerate}>
-              <Play size={16} />
-              {needsRegenerate ? 'Generate Recommended Teams (Changes Pending)' : 'Generate Recommended Teams'}
-            </button>
-          </div>
-
-          {ownedCharacters.length < 3 ? (
-            <div className="empty-state">
-              Select at least <strong>3 Resonators</strong> on the left and click <strong>Generate Recommended Teams</strong>.
-            </div>
-          ) : recommendedTeams.length === 0 ? (
-            <div className="empty-state">
-              No viable teams matched your current roster, boss resistances, or filters. Try adjusting your selections and clicking Generate.
-            </div>
-          ) : (
-            <div className="team-list">
-              {recommendedTeams.map((team, idx) => (
-                <article key={team.id} className="team-card">
-                  <div className="team-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <strong style={{ fontSize: '0.9rem', color: '#94a3b8' }}>#{idx + 1}</strong>
-                      {team.roomLabel && (
-                        <span
-                          className="archetype-badge"
-                          style={{
-                            background: 'rgba(99, 102, 241, 0.2)',
-                            color: '#c7d2fe',
-                            borderColor: 'rgba(129, 140, 248, 0.45)',
-                          }}
-                        >
-                          {team.roomLabel}
-                        </span>
-                      )}
-                      <span className="archetype-badge">{team.archetype}</span>
-                      {team.isMetaCore && (
-                        <span className="score-badge" style={{ background: 'rgba(251,191,36,0.16)', color: '#fcd34d', borderColor: 'rgba(251,191,36,0.4)' }}>
-                          Meta Core
-                        </span>
-                      )}
-                    </div>
-                    <span className="score-badge">Synergy {team.score}/100</span>
-                  </div>
-
-                  <div className="team-slots">
-                    {team.members.map((member, slotIdx) => (
-                      <div key={member.id} className="slot-box">
-                        <div className="slot-label">
-                          Slot {slotIdx + 1} · {member.role.split(' / ')[0]}
-                        </div>
-                        <div className="slot-name">{member.name}</div>
-                        <div className="slot-sub">
-                          <span className={`el-${member.element}`}>{member.element}</span> · {member.metaTier} · {member.weapon}
-                        </div>
+            <div className="roster-grid">
+              {filteredCharacters.map((char) => {
+                const owned = ownedIds.has(char.id);
+                const pinned = pinnedId === char.id;
+                return (
+                  <div
+                    key={char.id}
+                    className={`char-card ${owned ? 'owned' : ''} ${pinned ? 'pinned' : ''}`}
+                    onClick={() => toggleOwned(char.id)}
+                    title={char.outroDescription}
+                  >
+                    <div className="char-top">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                        <CharacterAvatar character={char} size={42} />
+                        <span className="char-name">{char.name}</span>
                       </div>
-                    ))}
-                  </div>
+                      <span className={char.rarity === 5 ? 'rarity-5' : 'rarity-4'} style={{ fontSize: '0.75rem', flexShrink: 0 }}>
+                        {char.rarity}★
+                      </span>
+                    </div>
 
-                  <div className="rotation-bar">
-                    <strong>Rotation:</strong> {team.rotationHint}
-                  </div>
+                    <div className="char-meta">
+                      <span className={`tag el-${char.element}`}>{char.element}</span>
+                      <span className="tag">{char.role.replace(' / Hybrid', '').replace(' / Healer', '')}</span>
+                      <span className="tag">{char.metaTier}</span>
+                    </div>
 
-                  <ul className="reasons-list">
-                    {team.reasons.map((r, rIdx) => (
-                      <li key={rIdx} className="reason-item">
-                        <span className={`reason-dot dot-${r.type}`} />
-                        <span>{r.label}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              ))}
+                    <div style={{ fontSize: '0.71rem', color: '#94a3b8', lineHeight: 1.3 }}>
+                      {char.primaryDamageTypes.slice(0, 2).join(' · ')}
+                    </div>
+
+                    <div className="char-actions">
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        {owned ? (
+                          <>
+                            <Check size={12} color="#38bdf8" /> Owned
+                          </>
+                        ) : (
+                          'Click to own'
+                        )}
+                      </span>
+                      <button
+                        className={`pin-btn ${pinned ? 'active' : ''}`}
+                        onClick={(e) => togglePin(e, char)}
+                        title="Build teams around this character"
+                      >
+                        {pinned ? 'Pinned' : 'Pin'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </section>
-      </div>
+          </section>
+
+          {/* RIGHT PANEL: CONDITIONS + RECOMMENDED TEAMS */}
+          <section className="panel">
+            <div className="panel-header">
+              <h2 className="panel-title">
+                <Swords size={18} /> 2. Endgame Matrix &amp; Teams
+              </h2>
+              <span className="pill">{recommendedTeams.length} Teams</span>
+            </div>
+
+            <div className="condition-box">
+              <div>
+                <div className="condition-label">Matrix Character Vigor Buff (+1 Extra Vigor)</div>
+                <select
+                  className="select-input"
+                  value={emergencyResonatorId}
+                  onChange={(e) => {
+                    setEmergencyResonatorId(e.target.value);
+                    setNeedsRegenerate(true);
+                  }}
+                >
+                  <option value="">None</option>
+                  {vigorCharacterOptions.map((opt) => (
+                    <option key={opt.key} value={opt.key}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: 4 }}>
+                  Endgame Matrix: Support/Healers (incl. Mornye; excl. Rover &amp; Youhu) have 2 Vigor, plus +1 Vigor for the selected Resonator.
+                </div>
+              </div>
+
+              <button className="generate-btn" onClick={handleGenerate}>
+                <Play size={16} />
+                {needsRegenerate ? 'Generate Recommended Teams (Changes Pending)' : 'Generate Recommended Teams'}
+              </button>
+            </div>
+
+            {ownedCharacters.length < 3 ? (
+              <div className="empty-state">
+                Select at least <strong>3 Resonators</strong> on the left and click <strong>Generate Recommended Teams</strong>.
+              </div>
+            ) : recommendedTeams.length === 0 ? (
+              <div className="empty-state">
+                No viable teams matched your current roster or filters. Try selecting more Resonators and clicking Generate.
+              </div>
+            ) : (
+              <div className="team-list">
+                {recommendedTeams.map((team, idx) => (
+                  <article key={team.id} className="team-card">
+                    <div className="team-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <strong style={{ fontSize: '0.9rem', color: '#94a3b8' }}>#{idx + 1}</strong>
+                        {team.roomLabel && (
+                          <span
+                            className="archetype-badge"
+                            style={{
+                              background: 'rgba(99, 102, 241, 0.2)',
+                              color: '#c7d2fe',
+                              borderColor: 'rgba(129, 140, 248, 0.45)',
+                            }}
+                          >
+                            {team.roomLabel}
+                          </span>
+                        )}
+                        <span className="archetype-badge">{team.archetype}</span>
+                        {team.isMetaCore && (
+                          <span className="score-badge" style={{ background: 'rgba(251,191,36,0.16)', color: '#fcd34d', borderColor: 'rgba(251,191,36,0.4)' }}>
+                            Meta Core
+                          </span>
+                        )}
+                      </div>
+                      <span className="score-badge">Synergy {team.score}/100</span>
+                    </div>
+
+                    <div className="team-slots">
+                      {team.members.map((member, slotIdx) => (
+                        <div key={member.id} className="slot-box">
+                          <div className="slot-label">
+                            Slot {slotIdx + 1} · {member.role.split(' / ')[0]}
+                          </div>
+                          <div className="slot-name">{member.name}</div>
+                          <div className="slot-sub">
+                            <span className={`el-${member.element}`}>{member.element}</span> · {member.metaTier} · {member.weapon}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rotation-bar">
+                      <strong>Rotation:</strong> {team.rotationHint}
+                    </div>
+
+                    <ul className="reasons-list">
+                      {team.reasons.map((r, rIdx) => (
+                        <li key={rIdx} className="reason-item">
+                          <span className={`reason-dot dot-${r.type}`} />
+                          <span>{r.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       )}
     </div>
   );

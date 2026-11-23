@@ -18,6 +18,7 @@ export interface Character {
   synergyNeeds: string[];
   metaTier: MetaTier;
   outroDescription: string;
+  signatureWeaponBuff?: string;
 }
 
 export type TeamArchetype =
@@ -31,7 +32,7 @@ export interface SynergyReason {
   label: string;
 }
 
-export type GameMode = 'toa' | 'whimpering_wastes' | 'endgame_matrix';
+export type GameMode = 'endgame_matrix';
 
 export type StageBuff =
   | 'none'

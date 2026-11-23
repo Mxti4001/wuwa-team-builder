@@ -640,3 +640,16 @@ thead .rerun-sticky-name {
   font-weight: 700;
   font-size: 0.72rem;
 }
+
+.mobile-swipe-hint {
+  display: none;
+  margin: 4px 0 0;
+  font-size: 0.74rem;
+  color: #7dd3fc;
+}
+
+@media (max-width: 768px) {
+  .mobile-swipe-hint {
+    display: block;
+  }
+}
