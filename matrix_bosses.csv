@@ -1,6 +1,6 @@
-name,element,weak_mechanics,resisted_element,base_fit,reason
-Feilian Beringal,Aero,Tune Break:42;Tune Rupture:42;Tune Strain:42,Aero,0,Weak to Tune Break (+12.5% per break up to 4 stacks)
-Denia,Fusion,Glacio Chafe:55;Negative Status:35,Fusion,0,Weak to Glacio Chafe (+30%) & Negative Status (+25% DMG)
-Crownless,Havoc,Unison:48,Havoc,0,Weak to Unison Response (+40% DMG for 30s)
-Sigillum,Spectro,Echo Skill:46,Spectro,0,Weak to Echo Skill hits (up to +80% DMG at 5 stacks)
-Matrix Mimic,Neutral,,None,20,Equal RES to all elements (1.1x points multiplier)
+name,element,weak_mechanics,resisted_element,base_fit,reason,image_url
+Feilian Beringal,Aero,Tune Break:42;Tune Rupture:42;Tune Strain:42,Aero,0,Weak to Tune Break (+12.5% per break up to 4 stacks),https://static.wikia.nocookie.net/wutheringwaves/images/5/53/Feilian_Beringal_Icon.png/revision/latest/scale-to-width-down/120
+Denia,Fusion,Glacio Chafe:55;Negative Status:35,Fusion,0,Weak to Glacio Chafe (+30%) & Negative Status (+25% DMG),https://static.wikia.nocookie.net/wutheringwaves/images/c/cc/Resonator_Denia.png/revision/latest/scale-to-width-down/120
+Crownless,Havoc,Unison:48,Havoc,0,Weak to Unison Response (+40% DMG for 30s),https://static.wikia.nocookie.net/wutheringwaves/images/7/70/Crownless_Icon.png/revision/latest/scale-to-width-down/120
+Sigillum,Spectro,Echo Skill:46,Spectro,0,Weak to Echo Skill hits (up to +80% DMG at 5 stacks),https://static.wikia.nocookie.net/wutheringwaves/images/e/eb/Sigillum_Icon.png/revision/latest/scale-to-width-down/120
+Matrix Mimic,Neutral,,None,20,Equal RES to all elements (1.1x points multiplier),https://static.wikia.nocookie.net/wutheringwaves/images/d/dd/Chest_Mimic_Icon.png/revision/latest/scale-to-width-down/120

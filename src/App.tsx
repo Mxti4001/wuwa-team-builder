@@ -269,7 +269,24 @@ export function App() {
                 {matrixBosses.map((boss) => (
                   <div key={boss.name} className="boss-card">
                     <div className="boss-card-top">
-                      <strong>{boss.name}</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                        {boss.imageUrl && (
+                          <img
+                            src={boss.imageUrl}
+                            alt={boss.name}
+                            referrerPolicy="no-referrer"
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 8,
+                              objectFit: 'cover',
+                              border: '1px solid rgba(148,163,184,0.3)',
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <strong>{boss.name}</strong>
+                      </div>
                       <span className={`tag el-${boss.element}`}>{boss.element}</span>
                     </div>
                     <div className="boss-card-reason">{boss.reason}</div>
@@ -516,12 +533,28 @@ export function App() {
                     </div>
 
                     {team.recommendedBoss && (
-                      <div className="boss-bar">
-                        <strong>Best Boss:</strong>{' '}
-                        <span className={`el-${team.recommendedBoss.element}`}>
-                          {team.recommendedBoss.name} ({team.recommendedBoss.element})
-                        </span>{' '}
-                        — {team.recommendedBoss.reason}
+                      <div className="boss-bar" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {team.recommendedBoss.imageUrl && (
+                          <img
+                            src={team.recommendedBoss.imageUrl}
+                            alt={team.recommendedBoss.name}
+                            referrerPolicy="no-referrer"
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 6,
+                              objectFit: 'cover',
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <span>
+                          <strong>Best Boss:</strong>{' '}
+                          <span className={`el-${team.recommendedBoss.element}`}>
+                            {team.recommendedBoss.name} ({team.recommendedBoss.element})
+                          </span>{' '}
+                          — {team.recommendedBoss.reason}
+                        </span>
                       </div>
                     )}
 

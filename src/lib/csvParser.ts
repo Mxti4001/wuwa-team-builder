@@ -104,6 +104,7 @@ export function loadMatrixBosses(): MatrixBossConfig[] {
       resistedElement: (get('resisted_element') || 'None') as ElementType | 'None',
       baseFit: Number(get('base_fit')) || 0,
       reason: get('reason'),
+      imageUrl: get('image_url') || undefined,
     };
   });
 }

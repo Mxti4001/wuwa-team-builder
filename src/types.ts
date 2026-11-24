@@ -59,6 +59,7 @@ export interface BossRecommendation {
   name: string;
   element: ElementType | 'Neutral';
   reason: string;
+  imageUrl?: string;
 }
 
 export interface MatrixBossConfig {
@@ -68,6 +69,7 @@ export interface MatrixBossConfig {
   resistedElement: ElementType | 'None';
   baseFit: number;
   reason: string;
+  imageUrl?: string;
 }
 
 export interface TeamRecommendation {

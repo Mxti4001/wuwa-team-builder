@@ -852,6 +852,7 @@ function recommendBossForTeam(members: Character[], carries: Character[]): BossR
       name: boss.name,
       element: boss.element,
       reason: boss.reason,
+      imageUrl: boss.imageUrl,
       fit,
     };
   });
@@ -861,8 +862,9 @@ function recommendBossForTeam(members: Character[], carries: Character[]): BossR
     name: 'Matrix Mimic',
     element: 'Neutral' as const,
     reason: 'Equal RES to all elements (1.1x points multiplier)',
+    imageUrl: undefined,
   };
-  return { name: best.name, element: best.element, reason: best.reason };
+  return { name: best.name, element: best.element, reason: best.reason, imageUrl: best.imageUrl };
 }
 
   const rawScore = Math.round(score);
